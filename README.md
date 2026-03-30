@@ -29,8 +29,10 @@ DATABASE_ENCRYPT=true
 DATABASE_TRUST_CERT=false
 DATABASE_POOL_SIZE=10
 
-JWT_ACCESS_SECRET=replace-with-a-strong-secret
+JWT_SECRET=replace-with-a-strong-secret
 JWT_REFRESH_SECRET=replace-with-a-strong-secret
+JWT_ACCESS_EXPIRES=15m
+JWT_REFRESH_EXPIRES=30d
 ```
 
 3. Make sure your database schema is created before starting the API.
@@ -42,6 +44,8 @@ Development mode (with auto-reload):
 ```bash
 npm run dev
 ```
+
+If you run Flutter on a physical phone, use your PC LAN IP instead of `localhost` in the Flutter API client.
 
 Production mode:
 
