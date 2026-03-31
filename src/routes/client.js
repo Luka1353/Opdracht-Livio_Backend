@@ -60,6 +60,7 @@ router.get('/tasks', async (req, res) => {
           t.id,
           t.title,
           t.description,
+          t.image_url,
           t.points,
           t.layer,
           t.is_active
@@ -128,6 +129,7 @@ router.get('/rewards', async (req, res) => {
           name,
           description,
           cost_points,
+          image_url,
           is_active
         FROM dbo.Rewards
         WHERE is_active = 1
@@ -135,6 +137,68 @@ router.get('/rewards', async (req, res) => {
       `);
 
         res.json({ data: result.recordset });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Redeem reward
+router.post('/rewards/:rewardId/redeem', async (req, res) => {
+    try {
+        const userId = req.headers['x-user-id'];
+        if (!userId) {
+            return res.status(400).json({ error: 'User ID required in x-user-id header' });
+        }
+
+        const pool = await getConnection();
+        const { rewardId } = req.params;
+
+        // Get client ID and current points
+        const clientResult = await new sql.Request(pool)
+            .input('user_id', sql.UniqueIdentifier, userId)
+            .query('SELECT id, points FROM dbo.Clients WHERE user_id = @user_id');
+
+        if (clientResult.recordset.length === 0) {
+            return res.status(404).json({ error: 'Client not found' });
+        }
+
+        const clientId = clientResult.recordset[0].id;
+        const currentPoints = clientResult.recordset[0].points;
+
+        // Get reward details
+        const rewardResult = await new sql.Request(pool)
+            .input('reward_id', sql.UniqueIdentifier, rewardId)
+            .query('SELECT cost_points FROM dbo.Rewards WHERE id = @reward_id');
+
+        if (rewardResult.recordset.length === 0) {
+            return res.status(404).json({ error: 'Reward not found' });
+        }
+
+        const costPoints = rewardResult.recordset[0].cost_points;
+
+        // Check if client has enough points
+        if (currentPoints < costPoints) {
+            return res.status(400).json({ error: 'Not enough points' });
+        }
+
+        // Deduct points and create redemption record
+        const { v4: uuidv4 } = require('uuid');
+        const redemptionId = uuidv4();
+        const newPoints = currentPoints - costPoints;
+
+        await new sql.Request(pool)
+            .input('client_id', sql.UniqueIdentifier, clientId)
+            .input('new_points', sql.Int, newPoints)
+            .input('redemption_id', sql.UniqueIdentifier, redemptionId)
+            .input('reward_id', sql.UniqueIdentifier, rewardId)
+            .input('cost_points', sql.Int, costPoints)
+            .query(`
+        UPDATE dbo.Clients SET points = @new_points WHERE id = @client_id;
+        INSERT INTO dbo.RewardRedemptions (id, reward_id, client_id, cost_points, status)
+        VALUES (@redemption_id, @reward_id, @client_id, @cost_points, 'pending')
+      `);
+
+        res.json({ message: 'Reward redeemed successfully', pointsDeducted: costPoints, remainingPoints: newPoints });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
