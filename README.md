@@ -1,68 +1,60 @@
 # Opdracht Livio Backend
 
-Backend API for the Zorg met de Schijf van Vijf project.
+Express.js REST API for the Zorg met de Schijf van Vijf project.
 
-## Requirements
-
-- Node.js 18+
-- npm
-- A SQL Server database
-
-## Setup
+## Quick Start
 
 1. Install dependencies:
-
 ```bash
 npm install
 ```
 
-2. Create a `.env` file in the project root with:
+2. Configure `.env` with database connection (see SETUP.md for full details)
 
-```env
-PORT=3000
-
-DATABASE_HOST=your-sql-server-host
-DATABASE_NAME=your-database-name
-DATABASE_USER=your-username
-DATABASE_PASSWORD=your-password
-DATABASE_ENCRYPT=true
-DATABASE_TRUST_CERT=false
-DATABASE_POOL_SIZE=10
-
-JWT_SECRET=replace-with-a-strong-secret
-JWT_REFRESH_SECRET=replace-with-a-strong-secret
-JWT_ACCESS_EXPIRES=15m
-JWT_REFRESH_EXPIRES=30d
-```
-
-3. Make sure your database schema is created before starting the API.
-
-## Run
-
-Development mode (with auto-reload):
-
+3. Run:
 ```bash
 npm run dev
 ```
 
-If you run Flutter on a physical phone, use your PC LAN IP instead of `localhost` in the Flutter API client.
+Backend will be available at `http://localhost:3000`
 
-Production mode:
+## API Endpoints
 
-```bash
-npm start
-```
+| Method | Endpoint | Purpose |
+|--------|----------|---------|
+| POST | `/api/auth/register` | Register new user |
+| POST | `/api/auth/login` | User login |
+| POST | `/api/auth/refresh` | Refresh access token |
+| POST | `/api/auth/logout` | User logout |
+| GET | `/api/client/dashboard` | Client dashboard (points, streak, tasks) |
+| GET | `/api/client/tasks` | Get client tasks |
+| POST | `/api/client/tasks/:id/complete` | Complete a task |
+| GET | `/api/client/rewards` | Get available rewards |
+| GET | `/api/family/clients` | Get linked clients |
+| GET | `/api/family/clients/:id` | Get client profile |
+| GET | `/api/family/clients/:id/tasks` | Get client task history |
+| GET | `/api/admin/clients` | Get all clients |
+| PUT | `/api/admin/clients/:id` | Update client |
+| GET | `/api/admin/tasks` | Get all tasks |
+| POST | `/api/admin/tasks` | Create task |
+| GET | `/api/admin/rewards` | Get all rewards |
+| POST | `/api/admin/rewards` | Create reward |
 
 ## Health Check
 
-When the server is running, check:
-
-```text
-GET http://localhost:3000/health
+```bash
+curl http://localhost:3000/health
 ```
 
 Expected response:
-
 ```json
 { "message": "Backend is running" }
 ```
+
+## Full Setup
+
+See [SETUP.md](../SETUP.md) for complete setup instructions including:
+- Database configuration
+- Environment variables
+- Testing endpoints
+- Troubleshooting
