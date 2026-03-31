@@ -18,7 +18,23 @@ cd backend
 npm install
 ```
 
-3. Update the `.env` file with your database details (already configured with your connection string)
+3. Update the `.env` file with your database details:
+```DATABASE_HOST=db46236.public.databaseasp.net
+DATABASE_USER=db46236
+DATABASE_PASSWORD="p#9PY6x?=oK4"
+DATABASE_NAME=db46236
+DATABASE_ENCRYPT=true
+DATABASE_TRUST_CERT=true
+DATABASE_POOL_SIZE=10
+ 
+JWT_SECRET=your-super-secret-jwt-key-change-this-in-production
+JWT_REFRESH_SECRET=your-super-secret-refresh-key-change-this
+JWT_ACCESS_EXPIRES=15m
+JWT_REFRESH_EXPIRES=30d
+ 
+PORT=3000
+NODE_ENV=development
+```
 
 4. Start the development server:
 ```bash

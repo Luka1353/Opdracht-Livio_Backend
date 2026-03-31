@@ -1,16 +1,20 @@
 const express = require('express');
 const { getConnection, sql } = require('../config/database');
-const { verifyToken, verifyRole } = require('../middleware/auth');
 
 const router = express.Router();
 
 // Get linked clients
-router.get('/clients', verifyToken, verifyRole(['family']), async (req, res) => {
+router.get('/clients', async (req, res) => {
     try {
+        const familyUserId = req.headers['x-user-id'];
+        if (!familyUserId) {
+            return res.status(400).json({ error: 'User ID required in x-user-id header' });
+        }
+
         const pool = await getConnection();
 
         const result = await new sql.Request(pool)
-            .input('family_user_id', sql.UniqueIdentifier, req.user.userId)
+            .input('family_user_id', sql.UniqueIdentifier, familyUserId)
             .query(`
         SELECT 
           c.id,
@@ -35,14 +39,19 @@ router.get('/clients', verifyToken, verifyRole(['family']), async (req, res) => 
 });
 
 // Get client profile by ID
-router.get('/clients/:clientId', verifyToken, verifyRole(['family']), async (req, res) => {
+router.get('/clients/:clientId', async (req, res) => {
     try {
+        const familyUserId = req.headers['x-user-id'];
+        if (!familyUserId) {
+            return res.status(400).json({ error: 'User ID required in x-user-id header' });
+        }
+
         const pool = await getConnection();
         const { clientId } = req.params;
 
         // Verify that the logged-in family member has access to this client
         const accessCheck = await new sql.Request(pool)
-            .input('family_user_id', sql.UniqueIdentifier, req.user.userId)
+            .input('family_user_id', sql.UniqueIdentifier, familyUserId)
             .input('client_id', sql.UniqueIdentifier, clientId)
             .query(`
         SELECT 1 FROM dbo.FamilyClientLinks
@@ -88,14 +97,19 @@ router.get('/clients/:clientId', verifyToken, verifyRole(['family']), async (req
 });
 
 // Get client tasks
-router.get('/clients/:clientId/tasks', verifyToken, verifyRole(['family']), async (req, res) => {
+router.get('/clients/:clientId/tasks', async (req, res) => {
     try {
+        const familyUserId = req.headers['x-user-id'];
+        if (!familyUserId) {
+            return res.status(400).json({ error: 'User ID required in x-user-id header' });
+        }
+
         const pool = await getConnection();
         const { clientId } = req.params;
 
         // Verify access
         const accessCheck = await new sql.Request(pool)
-            .input('family_user_id', sql.UniqueIdentifier, req.user.userId)
+            .input('family_user_id', sql.UniqueIdentifier, familyUserId)
             .input('client_id', sql.UniqueIdentifier, clientId)
             .query(`
         SELECT 1 FROM dbo.FamilyClientLinks
