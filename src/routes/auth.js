@@ -1,6 +1,5 @@
 const express = require('express');
 const authService = require('../services/authService');
-const { verifyToken } = require('../middleware/auth');
 
 const router = express.Router();
 
@@ -45,43 +44,6 @@ router.post('/login', async (req, res) => {
         });
     } catch (err) {
         res.status(401).json({ error: err.message });
-    }
-});
-
-// Refresh token
-router.post('/refresh', async (req, res) => {
-    try {
-        const { refreshToken } = req.body;
-
-        if (!refreshToken) {
-            return res.status(400).json({ error: 'Refresh token is required' });
-        }
-
-        const tokens = await authService.refreshAccessToken(refreshToken);
-
-        res.json({
-            message: 'Token refreshed',
-            data: tokens,
-        });
-    } catch (err) {
-        res.status(401).json({ error: err.message });
-    }
-});
-
-// Logout
-router.post('/logout', verifyToken, async (req, res) => {
-    try {
-        const { refreshToken } = req.body;
-
-        if (!refreshToken) {
-            return res.status(400).json({ error: 'Refresh token is required' });
-        }
-
-        await authService.logout(refreshToken);
-
-        res.json({ message: 'Logged out successfully' });
-    } catch (err) {
-        res.status(400).json({ error: err.message });
     }
 });
 

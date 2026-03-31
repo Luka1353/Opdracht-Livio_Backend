@@ -1,12 +1,11 @@
 const express = require('express');
 const { getConnection, sql } = require('../config/database');
-const { verifyToken, verifyRole } = require('../middleware/auth');
 const { v4: uuidv4 } = require('uuid');
 
 const router = express.Router();
 
 // Get all clients (admin only)
-router.get('/clients', verifyToken, verifyRole(['admin']), async (req, res) => {
+router.get('/clients', async (req, res) => {
     try {
         const pool = await getConnection();
 
@@ -35,8 +34,13 @@ router.get('/clients', verifyToken, verifyRole(['admin']), async (req, res) => {
 });
 
 // Update client (admin only)
-router.put('/clients/:clientId', verifyToken, verifyRole(['admin']), async (req, res) => {
+router.put('/clients/:clientId', async (req, res) => {
     try {
+        const adminUserId = req.headers['x-user-id'];
+        if (!adminUserId) {
+            return res.status(400).json({ error: 'Admin ID required in x-user-id header' });
+        }
+
         const pool = await getConnection();
         const { clientId } = req.params;
         const { birthDate, roomNumber, points, streakCurrent, streakBest } = req.body;
@@ -79,7 +83,7 @@ router.put('/clients/:clientId', verifyToken, verifyRole(['admin']), async (req,
                 await new sql.Request(transaction)
                     .input('id', sql.UniqueIdentifier, uuidv4())
                     .input('client_id', sql.UniqueIdentifier, clientId)
-                    .input('changed_by_user_id', sql.UniqueIdentifier, req.user.userId)
+                    .input('changed_by_user_id', sql.UniqueIdentifier, adminUserId)
                     .input('field_name', sql.NVarChar(100), 'birth_date')
                     .input('old_value', sql.NVarChar(1000), oldData.birth_date?.toString() || null)
                     .input('new_value', sql.NVarChar(1000), birthDate?.toString() || null)
@@ -93,7 +97,7 @@ router.put('/clients/:clientId', verifyToken, verifyRole(['admin']), async (req,
                 await new sql.Request(transaction)
                     .input('id', sql.UniqueIdentifier, uuidv4())
                     .input('client_id', sql.UniqueIdentifier, clientId)
-                    .input('changed_by_user_id', sql.UniqueIdentifier, req.user.userId)
+                    .input('changed_by_user_id', sql.UniqueIdentifier, adminUserId)
                     .input('field_name', sql.NVarChar(100), 'room_number')
                     .input('old_value', sql.NVarChar(1000), oldData.room_number || null)
                     .input('new_value', sql.NVarChar(1000), roomNumber || null)
@@ -115,7 +119,7 @@ router.put('/clients/:clientId', verifyToken, verifyRole(['admin']), async (req,
 });
 
 // Get all tasks (admin)
-router.get('/tasks', verifyToken, verifyRole(['admin']), async (req, res) => {
+router.get('/tasks', async (req, res) => {
     try {
         const pool = await getConnection();
 
@@ -140,8 +144,13 @@ router.get('/tasks', verifyToken, verifyRole(['admin']), async (req, res) => {
 });
 
 // Create task (admin)
-router.post('/tasks', verifyToken, verifyRole(['admin']), async (req, res) => {
+router.post('/tasks', async (req, res) => {
     try {
+        const adminUserId = req.headers['x-user-id'];
+        if (!adminUserId) {
+            return res.status(400).json({ error: 'Admin ID required in x-user-id header' });
+        }
+
         const pool = await getConnection();
         const { clientId, title, description, points, layer } = req.body;
 
@@ -154,7 +163,7 @@ router.post('/tasks', verifyToken, verifyRole(['admin']), async (req, res) => {
             .input('description', sql.NVarChar(1000), description || null)
             .input('points', sql.Int, points)
             .input('layer', sql.NVarChar(20), layer)
-            .input('created_by_user_id', sql.UniqueIdentifier, req.user.userId)
+            .input('created_by_user_id', sql.UniqueIdentifier, adminUserId)
             .query(`
         INSERT INTO dbo.Tasks (id, client_id, title, description, points, layer, created_by_user_id)
         VALUES (@id, @client_id, @title, @description, @points, @layer, @created_by_user_id)
@@ -167,7 +176,7 @@ router.post('/tasks', verifyToken, verifyRole(['admin']), async (req, res) => {
 });
 
 // Get all rewards (admin)
-router.get('/rewards', verifyToken, verifyRole(['admin']), async (req, res) => {
+router.get('/rewards', async (req, res) => {
     try {
         const pool = await getConnection();
 
@@ -190,8 +199,13 @@ router.get('/rewards', verifyToken, verifyRole(['admin']), async (req, res) => {
 });
 
 // Create reward (admin)
-router.post('/rewards', verifyToken, verifyRole(['admin']), async (req, res) => {
+router.post('/rewards', async (req, res) => {
     try {
+        const adminUserId = req.headers['x-user-id'];
+        if (!adminUserId) {
+            return res.status(400).json({ error: 'Admin ID required in x-user-id header' });
+        }
+
         const pool = await getConnection();
         const { name, description, costPoints } = req.body;
 
@@ -202,7 +216,7 @@ router.post('/rewards', verifyToken, verifyRole(['admin']), async (req, res) => 
             .input('name', sql.NVarChar(200), name)
             .input('description', sql.NVarChar(1000), description || null)
             .input('cost_points', sql.Int, costPoints)
-            .input('created_by_user_id', sql.UniqueIdentifier, req.user.userId)
+            .input('created_by_user_id', sql.UniqueIdentifier, adminUserId)
             .query(`
         INSERT INTO dbo.Rewards (id, name, description, cost_points, created_by_user_id)
         VALUES (@id, @name, @description, @cost_points, @created_by_user_id)

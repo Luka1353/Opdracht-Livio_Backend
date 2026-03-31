@@ -1,16 +1,20 @@
 const express = require('express');
 const { getConnection, sql } = require('../config/database');
-const { verifyToken, verifyRole } = require('../middleware/auth');
 
 const router = express.Router();
 
 // Get client dashboard
-router.get('/dashboard', verifyToken, verifyRole(['client']), async (req, res) => {
+router.get('/dashboard', async (req, res) => {
     try {
+        const userId = req.headers['x-user-id'];
+        if (!userId) {
+            return res.status(400).json({ error: 'User ID required in x-user-id header' });
+        }
+
         const pool = await getConnection();
 
         const result = await new sql.Request(pool)
-            .input('user_id', sql.UniqueIdentifier, req.user.userId)
+            .input('user_id', sql.UniqueIdentifier, userId)
             .query(`
         SELECT 
           c.points,
@@ -40,12 +44,17 @@ router.get('/dashboard', verifyToken, verifyRole(['client']), async (req, res) =
 });
 
 // Get client tasks
-router.get('/tasks', verifyToken, verifyRole(['client']), async (req, res) => {
+router.get('/tasks', async (req, res) => {
     try {
+        const userId = req.headers['x-user-id'];
+        if (!userId) {
+            return res.status(400).json({ error: 'User ID required in x-user-id header' });
+        }
+
         const pool = await getConnection();
 
         const result = await new sql.Request(pool)
-            .input('user_id', sql.UniqueIdentifier, req.user.userId)
+            .input('user_id', sql.UniqueIdentifier, userId)
             .query(`
         SELECT 
           t.id,
@@ -67,14 +76,19 @@ router.get('/tasks', verifyToken, verifyRole(['client']), async (req, res) => {
 });
 
 // Complete task
-router.post('/tasks/:taskId/complete', verifyToken, verifyRole(['client']), async (req, res) => {
+router.post('/tasks/:taskId/complete', async (req, res) => {
     try {
+        const userId = req.headers['x-user-id'];
+        if (!userId) {
+            return res.status(400).json({ error: 'User ID required in x-user-id header' });
+        }
+
         const pool = await getConnection();
         const { taskId } = req.params;
 
         // Get client ID
         const clientResult = await new sql.Request(pool)
-            .input('user_id', sql.UniqueIdentifier, req.user.userId)
+            .input('user_id', sql.UniqueIdentifier, userId)
             .query('SELECT id FROM dbo.Clients WHERE user_id = @user_id');
 
         if (clientResult.recordset.length === 0) {
@@ -103,7 +117,7 @@ router.post('/tasks/:taskId/complete', verifyToken, verifyRole(['client']), asyn
 });
 
 // Get rewards
-router.get('/rewards', verifyToken, verifyRole(['client']), async (req, res) => {
+router.get('/rewards', async (req, res) => {
     try {
         const pool = await getConnection();
 
