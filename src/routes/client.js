@@ -62,6 +62,7 @@ router.get('/tasks', async (req, res) => {
           t.description,
           t.image_url,
           t.points,
+          t.category_name,
           t.layer,
           t.is_active
         FROM dbo.Tasks t
