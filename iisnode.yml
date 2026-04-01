@@ -1,0 +1,6 @@
+loggingEnabled: true
+node_env: production
+devErrorsEnabled: true
+maxLogFileSizeInKB: 1024
+maxTotalLogFileSizeInKB: 10240
+maxLogFiles: 20
