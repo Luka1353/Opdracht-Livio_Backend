@@ -1,4 +1,8 @@
-require('dotenv').config();
+try {
+    require('dotenv').config();
+} catch (err) {
+    console.warn('dotenv not available, using host environment variables');
+}
 const express = require('express');
 const cors = require('cors');
 const { getConnection, closeConnection } = require('./src/config/database');
